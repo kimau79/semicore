@@ -17,8 +17,8 @@ const G = 43007.1  # Gravitational constant [1e-10 kpc Mo-1 (km s-1)-2]
 const rho_c = 3 * H ^ 2 / (8 * pi * G)  # Critical density [1e10 Mo kpc-3 h2]
 
 ############## NFW halo parameters ###############
-#const M_vir = 0.517  # [1e10 Mo h-1]
-#const c = 25.5 / 1.17  # Concentration parameter of the NFW halo
+const M_vir = 0.517  # [1e10 Mo h-1]
+const c = 25.5 / 1.17  # Concentration parameter of the NFW halo
 const rho_avg = 200 * rho_c  # Average density within virial radius [1e10 Mo kpc-3 h2]. rho_avg = delta_vir * rho_c
 
 ################# DDM parameters #################
@@ -30,8 +30,8 @@ const t_end = 14  # Ending time [Gyr]
 const numOfSteps = 15  # Total number of time evolution intervals
 
 ################ Shell parameters ################
-const firstShellThickness = 1e-5  # Thickness of first shell [kpc h-1]. If interested range of radius starts from 1e-n, use 1e-(n-2) for good accuracy
-const shellThicknessFactor = 1.0032  # Thickness of each consecutive shell grows exponentially by this rate factor
+const firstShellThickness = parse(Float64,ARGS[1])  # Thickness of first shell [kpc h-1]. If interested range of radius starts from 1e-n, use 1e-(n-2) for good accuracy
+const shellThicknessFactor = parse(Float64,ARGS[2])  # Thickness of each consecutive shell grows exponentially by this rate factor 1.0032
 const extend_factor = 4  # Maximum halo radius at initialization is set as R_vir * extend_factor. 4 is recommended
 
 ################# Miscellaneous ##################
@@ -41,14 +41,14 @@ const orderOfpolynomial = 14  # Order of polynomial for fitting res(x). 14 is re
 
 ######################################## Calculations ##############################################
 # NFW profile parameters
-#rho_0 = rho_avg * c ^ 3 / 3 / (log(1 + c) - c / (1 + c))
-#R_vir = (3 * M_vir / (4 * pi * rho_avg)) ^ (1 / 3)
-#R_s = R_vir / c
-rho_0 = 1.6022248e-3 / h / h 
-R_vir = 42.63597 * h 
-R_s = 3 * h
-const c = R_vir / R_s
-const M_vir = 4 * pi * rho_avg / 3 * R_vir ^ 3
+rho_0 = rho_avg * c ^ 3 / 3 / (log(1 + c) - c / (1 + c))
+R_vir = (3 * M_vir / (4 * pi * rho_avg)) ^ (1 / 3)
+R_s = R_vir / c
+#rho_0 = 1.6022248e-3 / h / h 
+#R_vir = 42.63597 * h 
+#R_s = 3 * h
+#const c = R_vir / R_s
+#const M_vir = 4 * pi * rho_avg / 3 * R_vir ^ 3
 const NFW_params = [rho_0, R_s, c]
 
 # For time step array
