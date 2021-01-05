@@ -2,11 +2,10 @@
 # Tested on Julia Version 1.4.2
 
 # Packages reqiured:
-using Pkg
-using DelimitedFiles
+#using DelimitedFiles
 ####################################################################################################
 
-include("myFunctions.jl")
+include("myFunctions_hb.jl")
 
 ############################################ Parameters ############################################
 ################### Constants ####################
@@ -19,8 +18,8 @@ const rho_c = 3 * H ^ 2 / (8 * pi * G)  # Critical density [1e10 Mo kpc-3 h2]
 
 ############## NFW halo parameters ###############
 const M_vir = 0.517  # [1e10 Mo h-1]
-const c = 21.6  # Concentration parameter of the NFW halo
-const rho_avg = 103.4 * rho_c  # Average density within virial radius [1e10 Mo kpc-3 h2]. rho_avg = delta_vir * rho_c
+const c = 25.5 / 1.17  # Concentration parameter of the NFW halo
+const rho_avg = 200 * rho_c  # Average density within virial radius [1e10 Mo kpc-3 h2]. rho_avg = delta_vir * rho_c
 
 ################# DDM parameters #################
 const v_k = 40  # Recoil velocity of newborn daughter particles [km s-1]
@@ -31,13 +30,13 @@ const t_end = 14  # Ending time [Gyr]
 const numOfSteps = 15  # Total number of time evolution intervals
 
 ################ Shell parameters ################
-const firstShellThickness = 1e-5  # Thickness of first shell [kpc h-1]. If interested range of radius starts from 1e-n, use 1e-(n-2) for good accuracy
-const shellThicknessFactor = 1.0032  # Thickness of each consecutive shell grows exponentially by this rate factor
+const firstShellThickness = parse(Float64,ARGS[1])  # Thickness of first shell [kpc h-1]. If interested range of radius starts from 1e-n, use 1e-(n-2) for good accuracy
+const shellThicknessFactor = parse(Float64,ARGS[2])  # Thickness of each consecutive shell grows exponentially by this rate factor 1.0032
 const extend_factor = 4  # Maximum halo radius at initialization is set as R_vir * extend_factor. 4 is recommended
 
 ################# Miscellaneous ##################
 const tol_ellipseGuess = 0.00001 / 100  # Tolerance for bisection method in ellipseRadii() [in the unit of shellThickness]. Smaller tolerance gives more accurate r_max and r_min. 0.00001 / 100 is recommended
-const orderOfpolynomial = parse(Int64,ARGS[1])  # Order of polynomial for fitting res(x). 14 is recommended
+const orderOfpolynomial = 14  # Order of polynomial for fitting res(x). 14 is recommended
 ####################################################################################################
 
 ######################################## Calculations ##############################################
@@ -45,6 +44,11 @@ const orderOfpolynomial = parse(Int64,ARGS[1])  # Order of polynomial for fittin
 rho_0 = rho_avg * c ^ 3 / 3 / (log(1 + c) - c / (1 + c))
 R_vir = (3 * M_vir / (4 * pi * rho_avg)) ^ (1 / 3)
 R_s = R_vir / c
+#rho_0 = 1.6022248e-3 / h / h 
+#R_vir = 42.63597 * h 
+#R_s = 3 * h
+#const c = R_vir / R_s
+#const M_vir = 4 * pi * rho_avg / 3 * R_vir ^ 3
 const NFW_params = [rho_0, R_s, c]
 
 # For time step array
@@ -60,7 +64,7 @@ numOfShells = floor(Int, log(1 - NFW_params[2] * NFW_params[3] * extend_factor  
 ####################################################################################################
 
 ########################################## Algorithm ###############################################
-function dmOnly()
+
     # For calculating runtime
     functionStart = time_ns()
     stepStart = time_ns()
@@ -72,7 +76,7 @@ function dmOnly()
     end
     
     # Parameter-specific subfolder
-    folderName = folderName * "/" * string(M_vir) * "_" * string(v_k) * "_" * string(tau) * "_" * string(numOfShells) * "_" * string(numOfSteps) * "_" * string(orderOfpolynomial)
+    folderName = folderName * "/" * string(M_vir) * "_" * string(v_k) * "_" * string(tau) * "_" * string(numOfShells) * "_" * string(numOfSteps)
     if !isdir(folderName)
         mkdir(folderName)
     end
@@ -81,46 +85,18 @@ function dmOnly()
     folderName_results = folderName * "/" * "results"
     if !isdir(folderName_results)
         mkdir(folderName_results)
-	for i=1:numOfSteps
-		mkdir(folderName_results * "/" * string(i))
-	end
     end
 
-    # Results subsubfolder
-    folderName_res = folderName * "/" * "res"
-    if !isdir(folderName_res)
-        mkdir(folderName_res)
-	for i=1:numOfSteps
-		mkdir(folderName_res * "/" * string(i))
-	end
-    end
+    # WF subsubfolder
+#    folderName_WF = folderName * "/" * "WF"
+#    if !isdir(folderName_WF)
+#        mkdir(folderName_WF)
+#    end
 
-    # Results subsubfolder
-    folderName_WF = folderName * "/" * "WeightFactor"
-    if !isdir(folderName_WF)
-        mkdir(folderName_WF)
-	for i=1:numOfSteps
-		mkdir(folderName_WF * "/" * string(i))
-	end
-    end
+#	for i=1:numOfSteps
+#	mkdir(folderName_WF*"/"*string(i))
+#	end
 
-    # Results subsubfolder
-    folderName_poly = folderName * "/" * "Poly"
-    if !isdir(folderName_poly)
-        mkdir(folderName_poly)
-	for i=1:numOfSteps
-		mkdir(folderName_poly * "/" * string(i))
-	end
-    end
-
-    # Results subsubfolder
-    folderName_SL = folderName * "/" * "SL"
-    if !isdir(folderName_SL)
-        mkdir(folderName_SL)
-	for i=1:numOfSteps
-		mkdir(folderName_SL * "/" * string(i))
-	end
-    end
     
     # Print ALL parameters to a file
     paramsFileName = folderName * "/params.txt"
@@ -151,6 +127,8 @@ function dmOnly()
     println(f, "t=", t)
     println(f, "numOfShells=", numOfShells)
 
+
+function dmOnly()
     ############# Initializing NFW halo ##############
     t_0 = t[1]
     println("Initializing at t=$t_0 Gyr...")
@@ -162,7 +140,6 @@ function dmOnly()
    
     # Initialize NFW total shells
     Tshells_radii, Tshells_mass = NFW_shells(NFW_params, numOfShells, shellThicknessFactor, extend_factor)
-writedlm(folderName * "/radii.txt",Tshells_radii)
     # Initialize daughter shells (empty)
     Dshells_mass = zeros(size(Tshells_radii, 1))  # No daughters at initialization
     # Initialize Mother shells
@@ -170,7 +147,6 @@ writedlm(folderName * "/radii.txt",Tshells_radii)
 
     Tshells_enclosedMass = enclosedMass(Tshells_radii, Tshells_mass)  # Enclosed mass of all particles
     Tshells_GPE = NFW_GPE(Tshells_radii, NFW_params, G)  # NFW GPE for this initial distribution
-writedlm(string(folderName,"/GPE.txt"),Tshells_GPE)
 
     # Intermediate results at each time step are outputted 
     MfileName = folderName * "/M_t=$t_0.txt"
@@ -201,14 +177,10 @@ writedlm(string(folderName,"/GPE.txt"),Tshells_GPE)
 
         # Calculate (per mass) L and total E of mothers from the total mass distribution
         Mshells_L = L(Tshells_radii, Tshells_enclosedMass, G)
-writedlm(folderName * "/res/L.txt",Mshells_L)
         Mshells_totalE_afterDecay = totalE_afterDecay(Tshells_radii, Tshells_GPE, Mshells_L, v_k)
-writedlm(string(folderName,"/totalE.txt"),Mshells_totalE_afterDecay)
 
         # Solve equation for r_max, r_min
-#	Mshells_ellipseRadii = readdlm("Radii.txt")
         Mshells_ellipseRadii = ellipseRadii(Mshells_L, Mshells_totalE_afterDecay, Tshells_radii, Tshells_GPE, tol_ellipseGuess)
-writedlm(string(folderName,"/RmaxRmin.txt"),Mshells_ellipseRadii)
     
         # Decay the mothers in the shells and distribute the new daughters
         Mshells_mass, Dshells_decayedMass = updateShellsMass(Tshells_radii, Mshells_ellipseRadii, Mshells_mass, p_undecayed, Mshells_L, Mshells_totalE_afterDecay, Tshells_GPE, Tshells_enclosedMass, t_i, orderOfpolynomial, G, NFW_params)
@@ -308,5 +280,5 @@ function print_t()
 end
 
 ######################################## Program script ############################################
-print_t()
+#print_t()
 dmOnly()  # Run the dark matter only algorithm
