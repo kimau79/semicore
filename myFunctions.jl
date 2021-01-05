@@ -639,24 +639,24 @@ function weightFactorSolver(r_ref,r_max,r_min,L,E,Tshells_GPE,Tshells_radii,Tshe
      res_node_0 = -1 / sqrt(dU_max * (x_max - x_min))
      res_node_1 = -1 / sqrt(-dU_min * (x_max -x_min))
 
-if r_max!=-1
-resFileName = "dmOnly/0.517_40_3_3353_1/res/" * string(t_i-1) * "/" * string(r_min)*".txt"
-B=readdlm("div.txt")
-C=zeros(size(B,1),6)
-for i=1:size(B,1)
-C[i,1]=B[i,1]
-end
-for i=2:size(B,1)-1
-C[i,2]=res(C[i,1])
-C[i,3]=1 / sqrt( E - U_eff(C[i,1]) )
-C[i,4]=1 / sqrt( dU_max * (x_max - C[i,1]) )
-C[i,5]=1 / sqrt( -1 * dU_min * (C[i,1] - x_min) )
-C[i,6]=(C[i,1]*(r_max-r_min))+r_min
-end
-C[1,2]=res_node_0
-C[1,6]=r_min
-C[size(B,1),2]=res_node_1
-C[size(B,1),6]=r_max
+#if r_max!=-1
+#resFileName = "dmOnly/0.517_40_3_3353_1/res/" * string(t_i-1) * "/" * string(r_min)*".txt"
+#B=readdlm("div.txt")
+#C=zeros(size(B,1),6)
+#for i=1:size(B,1)
+#C[i,1]=B[i,1]
+#end
+#for i=2:size(B,1)-1
+#C[i,2]=res(C[i,1])
+#C[i,3]=1 / sqrt( E - U_eff(C[i,1]) )
+#C[i,4]=1 / sqrt( dU_max * (x_max - C[i,1]) )
+#C[i,5]=1 / sqrt( -1 * dU_min * (C[i,1] - x_min) )
+#C[i,6]=(C[i,1]*(r_max-r_min))+r_min
+#end
+#C[1,2]=res_node_0
+#C[1,6]=r_min
+#C[size(B,1),2]=res_node_1
+#C[size(B,1),6]=r_max
 
 #writedlm(resFileName,C)
 end
