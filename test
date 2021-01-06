@@ -1,7 +1,0 @@
-#!/bin/bash
-
-julia main.jl 1e-7 1.002
-wait
-julia main.jl 1e-7 1.003
-wait
-julia main.jl 1e-7 1.004
