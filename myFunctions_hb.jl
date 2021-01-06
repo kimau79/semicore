@@ -15,7 +15,7 @@ A = ref_GPE2/-1/ref_radii1^n
 if a==1
 return -A*r^n	#return normal GPE extrapolation
 else
-return -n*A*r^(r-1)	#return derivative GPE extrapolation
+return -n*A*r^(n-1)	#return derivative GPE extrapolation
 end
 end
 end
