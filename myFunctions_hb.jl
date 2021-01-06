@@ -460,8 +460,6 @@ function weightFactorArray(r_ref, shells_ellipseRadii, L, shells_totalE, Tshells
 
         end
     end
-writedlm(folderName*"/RminRmax"*string(t_i-1)*".txt",shells_ellipseRadii)
-writedlm(folderName_WF*"/"*string(t_i-1)*"/"*string(r_ref)*".txt",weightFactor)
     return weightFactor
 end
 
@@ -742,8 +740,6 @@ function adiabaticExpansion(shells_radii, shells_mass, Tshells_enclosedMass, Tsh
     # end
     
     expansionRatios = Tshells_enclosedMass[1:size(shells_radii, 1)] ./ Tshells_enclosedMass_updated[1:size(shells_radii, 1)]
-
-writedlm()
  
     # # Hotfix for expansion ratio very close to 1 (maybe not)
     # for i in 1:size(expansionRatios, 1)

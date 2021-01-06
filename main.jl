@@ -2,7 +2,7 @@
 # Tested on Julia Version 1.4.2
 
 # Packages reqiured:
-using DelimitedFiles
+# none
 ####################################################################################################
 
 include("myFunctions_hb.jl")
@@ -86,18 +86,6 @@ numOfShells = floor(Int, log(1 - NFW_params[2] * NFW_params[3] * extend_factor  
     if !isdir(folderName_results)
         mkdir(folderName_results)
     end
-
-    # WF subsubfolder
-    folderName_WF = folderName * "/" * "WF"
-    if !isdir(folderName_WF)
-        mkdir(folderName_WF)
-    end
-
-	for i=1:numOfSteps
-    if !isdir(folderName_WF*"/"*string(i))
-	mkdir(folderName_WF*"/"*string(i))
-	end
-end
 
     
     # Print ALL parameters to a file
