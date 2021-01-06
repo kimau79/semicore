@@ -3,7 +3,7 @@
 
 ################################## Function that use to solve system of linear equations######################################################
 
-function GPE_extrapolate(r, shells_radii, shells_GPE,n)
+function GPE_extrapolate(r, shells_radii, shells_GPE,a)
 #use power law GPE(r) = -Ar^n to extrapolate, for some A, n to be determined
 if r>shells_radii[end,3] #the only case that this function should be used
 ref_GPE1 = shells_GPE[end-1,1]
@@ -12,7 +12,7 @@ ref_radii1 = shells_radii[end-1,3]
 ref_radii2 = shells_radii[end,3]
 n = log(ref_GPE2/ref_GPE1)/log(ref_radii2/ref_radii1)
 A = ref_GPE2/-1/ref_radii1^n
-if n==1
+if a==1
 return -A*r^n	#return normal GPE extrapolation
 else
 return -n*A*r^(r-1)	#return derivative GPE extrapolation
@@ -460,6 +460,8 @@ function weightFactorArray(r_ref, shells_ellipseRadii, L, shells_totalE, Tshells
 
         end
     end
+writedlm(folderName*"/RminRmax"*string(t_i-1)*".txt",shells_ellipseRadii)
+writedlm(folderName_WF*"/"*string(t_i-1)*"/"*string(r_ref)*".txt",weightFactor)
     return weightFactor
 end
 
@@ -740,6 +742,8 @@ function adiabaticExpansion(shells_radii, shells_mass, Tshells_enclosedMass, Tsh
     # end
     
     expansionRatios = Tshells_enclosedMass[1:size(shells_radii, 1)] ./ Tshells_enclosedMass_updated[1:size(shells_radii, 1)]
+
+writedlm()
  
     # # Hotfix for expansion ratio very close to 1 (maybe not)
     # for i in 1:size(expansionRatios, 1)

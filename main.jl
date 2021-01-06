@@ -2,7 +2,7 @@
 # Tested on Julia Version 1.4.2
 
 # Packages reqiured:
-# None
+using DelimitedFiles
 ####################################################################################################
 
 include("myFunctions_hb.jl")
@@ -36,7 +36,7 @@ const extend_factor = 4  # Maximum halo radius at initialization is set as R_vir
 
 ################# Miscellaneous ##################
 const tol_ellipseGuess = 0.00001 / 100  # Tolerance for bisection method in ellipseRadii() [in the unit of shellThickness]. Smaller tolerance gives more accurate r_max and r_min. 0.00001 / 100 is recommended
-const orderOfpolynomial = 14  # Order of polynomial for fitting res(x). 14 is recommended
+const orderOfpolynomial = parse(Int64,ARGS[3])  # Order of polynomial for fitting res(x). 14 is recommended
 ####################################################################################################
 
 ######################################## Calculations ##############################################
@@ -64,7 +64,7 @@ numOfShells = floor(Int, log(1 - NFW_params[2] * NFW_params[3] * extend_factor  
 ####################################################################################################
 
 ########################################## Algorithm ###############################################
-function dmOnly()
+
     # For calculating runtime
     functionStart = time_ns()
     stepStart = time_ns()
@@ -86,6 +86,19 @@ function dmOnly()
     if !isdir(folderName_results)
         mkdir(folderName_results)
     end
+
+    # WF subsubfolder
+    folderName_WF = folderName * "/" * "WF"
+    if !isdir(folderName_WF)
+        mkdir(folderName_WF)
+    end
+
+	for i=1:numOfSteps
+    if !isdir(folderName_WF*"/"*string(i))
+	mkdir(folderName_WF*"/"*string(i))
+	end
+end
+
     
     # Print ALL parameters to a file
     paramsFileName = folderName * "/params.txt"
@@ -116,6 +129,8 @@ function dmOnly()
     println(f, "t=", t)
     println(f, "numOfShells=", numOfShells)
 
+
+function dmOnly()
     ############# Initializing NFW halo ##############
     t_0 = t[1]
     println("Initializing at t=$t_0 Gyr...")
