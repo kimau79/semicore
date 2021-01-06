@@ -3,7 +3,7 @@
 
 ################################## Function that use to solve system of linear equations######################################################
 
-function GPE_extrapolate(r, shells_radii, shells_GPE,n)
+function GPE_extrapolate(r, shells_radii, shells_GPE,a)
 #use power law GPE(r) = -Ar^n to extrapolate, for some A, n to be determined
 if r>shells_radii[end,3] #the only case that this function should be used
 ref_GPE1 = shells_GPE[end-1,1]
@@ -12,10 +12,10 @@ ref_radii1 = shells_radii[end-1,3]
 ref_radii2 = shells_radii[end,3]
 n = log(ref_GPE2/ref_GPE1)/log(ref_radii2/ref_radii1)
 A = ref_GPE2/-1/ref_radii1^n
-if n==1
+if a==1
 return -A*r^n	#return normal GPE extrapolation
 else
-return -n*A*r^(r-1)	#return derivative GPE extrapolation
+return -n*A*r^(n-1)	#return derivative GPE extrapolation
 end
 end
 end
