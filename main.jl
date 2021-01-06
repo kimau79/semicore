@@ -3,6 +3,14 @@
 
 # Packages reqiured:
 # none
+
+# date last updated: 7 Jan 2020
+# Command to run the code from Unix:
+# julia main.jl (input1) (input2) (input3)
+# input1 = Thickness of first shell (see "firstShellThickness" below)
+# input2 = shell thickness factor (see "shellThicknessFactor" below)
+# input3 = order of polynomial (see "orderOfpolynomial" below), must be integer
+
 ####################################################################################################
 
 include("myFunctions_hb.jl")
@@ -31,7 +39,7 @@ const numOfSteps = 15  # Total number of time evolution intervals
 
 ################ Shell parameters ################
 const firstShellThickness = parse(Float64,ARGS[1])  # Thickness of first shell [kpc h-1]. If interested range of radius starts from 1e-n, use 1e-(n-2) for good accuracy
-const shellThicknessFactor = parse(Float64,ARGS[2])  # Thickness of each consecutive shell grows exponentially by this rate factor 1.0032
+const shellThicknessFactor = parse(Float64,ARGS[2])  # Thickness of each consecutive shell grows exponentially by this rate factor. Originally 1.0032
 const extend_factor = 4  # Maximum halo radius at initialization is set as R_vir * extend_factor. 4 is recommended
 
 ################# Miscellaneous ##################
