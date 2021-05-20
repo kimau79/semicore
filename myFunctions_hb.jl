@@ -11,11 +11,11 @@ ref_GPE2 = shells_GPE[end,1]
 ref_radii1 = shells_radii[end-1,3]
 ref_radii2 = shells_radii[end,3]
 n = log(ref_GPE2/ref_GPE1)/log(ref_radii2/ref_radii1)
-A = ref_GPE2/-1/ref_radii1^n
+A = ref_GPE2/ref_radii2^n
 if a==1
-return -A*r^n	#return normal GPE extrapolation
+return A*r^n	#return normal GPE extrapolation
 else
-return -n*A*r^(n-1)	#return derivative GPE extrapolation
+return n*A*r^(n-1)	#return derivative GPE extrapolation
 end
 end
 end
@@ -490,10 +490,8 @@ function U_eff_gfunction(x,r_max,r_min, L, Tshells_radii, Tshells_GPE)
         return radiusGPE + (L / r) ^ 2 / 2 
     end
 end
+
 function dU_eff(r, L, Tshells_radii, Tshells_enclosedMass, Tshells_GPE)
-    
-    
-    
     if r <= 0  # Rejected
         println("Dead End")
         return zeros(NaN)  # Error
@@ -740,6 +738,17 @@ function adiabaticExpansion(shells_radii, shells_mass, Tshells_enclosedMass, Tsh
     # end
     
     expansionRatios = Tshells_enclosedMass[1:size(shells_radii, 1)] ./ Tshells_enclosedMass_updated[1:size(shells_radii, 1)]
+
+ER_filename = folderName
+run_id2 = -1
+for i=1:100
+if !isfile(ER_filename*"/ER"*string(i)*".txt")
+	run_id2 = i
+	break
+end
+end
+ER_filename *="/ER"*string(run_id2)*".txt"
+writedlm(ER_filename,expansionRatios)
  
     # # Hotfix for expansion ratio very close to 1 (maybe not)
     # for i in 1:size(expansionRatios, 1)
