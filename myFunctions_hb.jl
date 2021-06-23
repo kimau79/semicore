@@ -738,17 +738,6 @@ function adiabaticExpansion(shells_radii, shells_mass, Tshells_enclosedMass, Tsh
     # end
     
     expansionRatios = Tshells_enclosedMass[1:size(shells_radii, 1)] ./ Tshells_enclosedMass_updated[1:size(shells_radii, 1)]
-
-ER_filename = folderName
-run_id2 = -1
-for i=1:100
-if !isfile(ER_filename*"/ER"*string(i)*".txt")
-	run_id2 = i
-	break
-end
-end
-ER_filename *="/ER"*string(run_id2)*".txt"
-writedlm(ER_filename,expansionRatios)
  
     # # Hotfix for expansion ratio very close to 1 (maybe not)
     # for i in 1:size(expansionRatios, 1)

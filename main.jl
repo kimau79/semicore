@@ -40,7 +40,7 @@ const Additional_steps = 2  #If the final time step is too large, can further br
 ################ Shell parameters ################
 const firstShellThickness = 1e-6  # Thickness of first shell [kpc h-1]. If interested range of radius starts from 1e-n, use 1e-(n-2) for good accuracy
 const shellThicknessFactor = 1.0032  # Thickness of each consecutive shell grows exponentially by this rate factor. Originally 1.0032
-const extend_factor = 4  # Maximum halo radius at initialization is set as R_vir * extend_factor. 4 is recommended
+const extend_factor = 5  # Maximum halo radius at initialization is set as R_vir * extend_factor. 4 is recommended
 
 ############### The Ratio of Stars in NFW Profile ########
 Sprofile_type=2 		#0 = off; 1 = gaussian; 2 = singular isothermal sphere
