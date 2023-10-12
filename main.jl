@@ -14,6 +14,14 @@ using DelimitedFiles		#Optional, but more convenient to read and write arrays
 
 include("myFunctions_hb.jl")
 
+####################################################################################################
+# In this version of semicore, it is possible to choose to read from a GADGET snapshot
+# Then all the calculations relevant to the initial condition will be overridden
+
+read_from_snapshot = 0		# 0 - do NOT read from snapshot, and use parameters below instead
+				# 1 - read from GADGET snapshot and overwrite all IC calculations below
+snapshot_path = "/Users/kiuchingleung/Downloads/NFW_king_tau7_vk40_M0.02_rs1_rcut16/output/snapdir/0all.txt"
+
 ############################################ Parameters ############################################
 ################### Constants ####################
 const Mo = 1.98847e30  # Solar mass [kg]
@@ -24,8 +32,8 @@ const G = 43007.1  # Gravitational constant [1e-10 kpc Mo-1 (km s-1)-2]
 const rho_c = 3 * H ^ 2 / (8 * pi * G)  # Critical density [1e10 Mo kpc-3 h2]
 
 ############## NFW halo parameters ###############
-const M_vir = 5.17  # [1e10 Mo h-1]
-const c = 25.5 / 1.17  # Concentration parameter of the NFW halo
+const M_vir = 200  # [1e10 Mo h-1]
+const c = 12  # Concentration parameter of the NFW halo
 const rho_avg = 200 * rho_c  # Average density within virial radius [1e10 Mo kpc-3 h2]. rho_avg = delta_vir * rho_c
 
 ################# DDM parameters #################
@@ -38,16 +46,19 @@ const numOfSteps = 14  # Total number of time evolution intervals
 const Additional_steps = 2  #If the final time step is too large, can further break into small steps
 
 ################ Shell parameters ################
-const firstShellThickness = 1e-6  # Thickness of first shell [kpc h-1]. If interested range of radius starts from 1e-n, use 1e-(n-2) for good accuracy
+const firstShellThickness = 3e-3  # Thickness of first shell [kpc h-1]. If interested range of radius starts from 1e-n, use 1e-(n-2) for good accuracy
 const shellThicknessFactor = 1.0032  # Thickness of each consecutive shell grows exponentially by this rate factor. Originally 1.0032
-const extend_factor = 5  # Maximum halo radius at initialization is set as R_vir * extend_factor. 4 is recommended
+const extend_factor = 4  # Maximum halo radius at initialization is set as R_vir * extend_factor. 4 is recommended
 
 ############### The Ratio of Stars in NFW Profile ########
-Sprofile_type=2 		#0 = off; 1 = gaussian; 2 = singular isothermal sphere
-star_to_DM_ratio = 1/100	#Usuing DM's virial mass (not total mass) as base, this ratio gives the mass of stars with the "virial" radius specified below
+Sprofile_type=3 		#0 = off; 1 = gaussian; 2 = singular isothermal sphere; 3 = king
+star_cum_mass = 1e-4		# the desired total mass of the star profile, in [1e10 Mo h-1]
+#star_to_DM_ratio = 1/100	#Using DM's virial mass (not total mass) as base, this ratio gives the mass of stars with the "virial" radius specified below
 star_vir_radius = 0.1 		#Together with the parameter above, it specifies the mass of star desired within a radius. (in kpc)
 radius_to_sd = 2		#(Gaussian) This number sets the ratio between the radius and SD of the gaussian distribution. It means that the SD = star_vir_radius / radius_to_sd
 cutoff_SingIso = 0.5		#(Isothermal) since singular isothermal profile diverges, cutoff req'd (hard cutoff)
+king_core_radius = 0.01		#(King) core radius
+king_tidal_radius = 0.18	#(King) tidal radius ==> no star beyond this radius
 
 
 ################# Miscellaneous ##################
@@ -66,7 +77,8 @@ R_s = R_vir / c
 #const c = R_vir / R_s
 #const M_vir = 4 * pi * rho_avg / 3 * R_vir ^ 3
 const NFW_params = [rho_0, R_s, c]
-star_params=[star_to_DM_ratio, star_vir_radius, radius_to_sd]
+#star_params=[star_to_DM_ratio, star_vir_radius, radius_to_sd]
+star_params=[star_cum_mass, star_vir_radius, radius_to_sd]
 
 # For time step array
 delta_m = (1 - exp(-log(2) * t_end / tau)) / numOfSteps  # For having equal amounts of mass decayed every time step
@@ -175,7 +187,7 @@ function dmOnly()
 
     # Initialize Star shells
 	if Sprofile_type==1 #Gaussian
-		star_cum_mass = M_vir * star_to_DM_ratio
+		#star_cum_mass = M_vir * star_to_DM_ratio
 		#star_cum_mass = 4*pi*rho_0*R_s^3*(log(1+star_vir_radius/R_s)+R_s/(R_s+star_vir_radius)-1)*star_to_DM_ratio
 		k_star = 2*(star_vir_radius/radius_to_sd)^2
 		A_star = star_cum_mass/2/sqrt(pi*k_star)/(sqrt(pi*k_star)/2*erf(star_vir_radius/sqrt(k_star))-star_vir_radius*exp(-star_vir_radius^2/k_star))
@@ -187,7 +199,7 @@ function dmOnly()
 			Cum_mass_temp += Sshells_mass[i]
 		end
 	elseif Sprofile_type==2 #Isothermal
-		star_cum_mass = M_vir * star_to_DM_ratio
+		#star_cum_mass = M_vir * star_to_DM_ratio
 		sigma_v_sq = star_cum_mass * G / star_vir_radius	#rms velocity of stars
 		Cum_mass_star2(r) = sigma_v_sq / G * r
 		Sshells_mass[1] = Cum_mass_star2(Tshells_radii[1,2])
@@ -202,8 +214,49 @@ function dmOnly()
 				Sshells_mass[i]=0
 			end
 		end
+	elseif Sprofile_type==3 #king
+		rt = king_tidal_radius #only for easier tracing of the calculations below
+		rc = king_core_radius
+		r_tc = rt/rc
+		king_normalisation = star_cum_mass/ (pi * rc^2 * (log(1 + r_tc^2) - 4 * (sqrt(1 + r_tc^2)-1) / sqrt(1 + r_tc^2) + r_tc^2 / (1+r_tc^2) ))
+		Cum_mass_star3(r) = king_normalisation * rc^2 * pi * ( log(1 + r^2/rc^2) - 4 * (sqrt(1+r^2/rc^2)-1) / sqrt(1+rt^2 / rc^2) + r^2/rc^2/(1+rt^2/rc^2) )
+		Sshells_mass[1] = Cum_mass_star3(Tshells_radii[1,2])
+		Cum_mass_temp = Sshells_mass[1]
+		for i=2:size(Tshells_radii,1)
+			if Tshells_radii[i,2] <= rt
+				Sshells_mass[i] = Cum_mass_star3(Tshells_radii[i,2])-Cum_mass_temp
+				Cum_mass_temp += Sshells_mass[i]
+			elseif Tshells_radii[i,1] <= rt
+				Sshells_mass[i] = star_cum_mass - Cum_mass_temp
+			else
+				Sshells_mass[i]=0
+			end
+		end
 	end
 
+
+
+#if read from snapshot, replace the mass distributions
+
+if read_from_snapshot!=0
+	Mshells_mass = zeros(size(Tshells_radii, 1))
+	Sshells_mass = zeros(size(Tshells_radii, 1))
+	Tshells_mass = zeros(size(Tshells_radii, 1))
+
+	temp = readdlm(read_from_snapshot)
+	tracker = 1
+
+	for p in 1:size(Tshells_radii, 1)
+		while tracker<=size(temp,1) && temp[tracker,1]<=Tshells_radii[p,2]
+			if temp[tracker,6]>300000
+			Sshells_mass[p] += temp[tracker,5]
+			else
+			Tshells_mass[p] += temp[tracker,5]
+			end
+			tracker += 1
+		end
+	end
+end
 
 
     # Initialize Mother shells
@@ -211,7 +264,9 @@ function dmOnly()
     Tshells_mass += Sshells_mass
 
     Tshells_enclosedMass = enclosedMass(Tshells_radii, Tshells_mass)  # Enclosed mass of all particles
-    Tshells_GPE = NFW_GPE(Tshells_radii, NFW_params, G)  # NFW GPE for this initial distribution
+#    Tshells_GPE = NFW_GPE(Tshells_radii, NFW_params, G)  # NFW GPE for this initial distribution
+    Tshells_GPE = GPE(Tshells_radii, Tshells_mass, Tshells_enclosedMass, G)
+
 
     # Intermediate results at each time step are outputted
     MfileName = folderName * "/M_t=$t_0.txt"

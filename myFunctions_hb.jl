@@ -614,13 +614,13 @@ function weightFactorSolver(r_ref,r_max,r_min,L,E,Tshells_GPE,Tshells_radii,Tshe
     x_max = 1
     x_ref = (r_ref - r_min) / (r_max - r_min)
     
-    if t_i == 2
-        dU_max = dU_eff_NFW(r_max,NFW_params,G,L) *(r_max - r_min)
-        dU_min = dU_eff_NFW(r_min,NFW_params,G,L) *(r_max - r_min)
-    else
+    #if t_i == 2
+    #    dU_max = dU_eff_NFW(r_max,NFW_params,G,L) *(r_max - r_min)
+    #    dU_min = dU_eff_NFW(r_min,NFW_params,G,L) *(r_max - r_min)
+    #else
         dU_max = dU_eff(r_max,L,Tshells_radii,Tshells_enclosedMass,Tshells_GPE) * (r_max - r_min)
         dU_min = dU_eff(r_min,L,Tshells_radii,Tshells_enclosedMass,Tshells_GPE) * (r_max - r_min)
-    end
+    #end
 
     res(x)= 1 / sqrt( E - U_eff(x) )- 1 / sqrt( -1 * dU_min * (x - x_min) )- 1 / sqrt( dU_max * (x_max - x) )
      #### compute the first and final node of res which has strong singularity if we calculate it computationally
